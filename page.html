@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controla el LED del Relay y Visualiza la Temperatura</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    h2 {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Controla el LED del Relay</h1>
+  <p>Estado del Relay: <strong id="relayEstado">Cargando...</strong></p>
+  <button id="toggleBtn">Cambiar estado</button>
+  
+  <h2>Datos del DHT11:</h2>
+  <p>Temperatura: <strong id="temperatura">Cargando...</strong> °C</p>
+  <p>Humedad: <strong id="humedad">Cargando...</strong> %</p>
+
+  <script>
+    // Función para obtener y actualizar los datos de temperatura, humedad y estado del relé
+    async function actualizarDatos() {
+      try {
+        const response = await fetch("/"); // Petición al servidor para obtener los datos
+        const text = await response.text(); // Obtener el contenido de la respuesta
+        
+        // Extraer datos del texto de la respuesta
+        const tempMatch = text.match(/Temperatura:\s(-?\d+\.?\d*)\s°C/);
+        const humMatch = text.match(/Humedad:\s(\d+\.?\d*)\s%/);
+        const relayMatch = text.match(/Estado:\s<strong>(ENCENDIDO|APAGADO)<\/strong>/);
+
+        // Actualizar la página con los valores recibidos
+        if (tempMatch) document.getElementById("temperatura").innerText = tempMatch[1];
+        if (humMatch) document.getElementById("humedad").innerText = humMatch[1];
+        if (relayMatch) document.getElementById("relayEstado").innerText = relayMatch[1];
+      } catch (error) {
+        console.error("Error al obtener los datos:", error);
+      }
+    }
+
+    // Función para cambiar el estado del relé
+    async function cambiarEstado() {
+      await fetch("/toggle"); // Enviar una petición al servidor para cambiar el estado del relé
+      actualizarDatos(); // Actualizar los datos después de cambiar el estado
+    }
+
+    // Inicializar la página
+    document.getElementById("toggleBtn").addEventListener("click", cambiarEstado);
+
+    // Actualizar los datos cada 5 segundos
+    setInterval(actualizarDatos, 5000);
+
+    // Actualizar los datos al cargar la página por primera vez
+    actualizarDatos();
+  </script>
+</body>
+</html>
